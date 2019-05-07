@@ -267,7 +267,7 @@ size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
 	dirent->off = off;
 	dirent->namelen = namelen;
 	dirent->type = (stbuf->st_mode & 0170000) >> 12;
-	strncpy(dirent->name, name, namelen);
+	memcpy(dirent->name, name, namelen);
 	memset(dirent->name + namelen, 0, entlen_padded - entlen);
 
 	return entlen_padded;
@@ -360,7 +360,7 @@ size_t fuse_add_direntry_plus(fuse_req_t req, char *buf, size_t bufsize,
 	dirent->off = off;
 	dirent->namelen = namelen;
 	dirent->type = (e->attr.st_mode & 0170000) >> 12;
-	strncpy(dirent->name, name, namelen);
+	memcpy(dirent->name, name, namelen);
 	memset(dirent->name + namelen, 0, entlen_padded - entlen);
 
 	return entlen_padded;
@@ -2543,7 +2543,7 @@ void fuse_lowlevel_help(void)
 	printf(
 "    -o allow_other             allow access by all users\n"
 "    -o allow_root              allow access by root\n"
-"    -o vhost_user_socket=PATH  path for the vhost-user socket to talk to QEMU\n"
+"    -o vhost_user_socket=PATH  path for the vhost-user socket\n"
 "    -o auto_unmount            auto unmount on process termination\n");
 }
 
