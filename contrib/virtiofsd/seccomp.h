@@ -10,5 +10,6 @@
 #define VIRTIOFSD_SECCOMP_H
 
 void setup_seccomp(void);
+void setup_seccomp_memfsd(void);
 
 #endif /* VIRTIOFSD_SECCOMP_H */

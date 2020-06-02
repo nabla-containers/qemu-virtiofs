@@ -6,7 +6,19 @@ virtiofsd-obj-y = buffer.o \
                   fuse_virtio.o \
                   helper.o \
                   passthrough_ll.o \
+                  utils.o \
                   seccomp.o
+
+memfsd-obj-y = buffer.o \
+               fuse_opt.o \
+               fuse_loop_mt.o \
+               fuse_lowlevel.o \
+               fuse_signals.o \
+               fuse_virtio.o \
+               helper.o \
+               memfs_ll.o \
+               utils.o \
+               seccomp.o
 
 seccomp.o-cflags := $(SECCOMP_CFLAGS)
 seccomp.o-libs := $(SECCOMP_LIBS)

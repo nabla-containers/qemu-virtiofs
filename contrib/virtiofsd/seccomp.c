@@ -13,7 +13,7 @@
 #include <glib.h>
 #include "seccomp.h"
 
-static const int syscall_whitelist[] = {
+static const int virtiofsd_allowlist[] = {
 	/* TODO ireg sem*() syscalls */
 	SCMP_SYS(brk),
 	SCMP_SYS(clone),
@@ -78,7 +78,35 @@ static const int syscall_whitelist[] = {
 	SCMP_SYS(write),
 };
 
-void setup_seccomp(void)
+static const int memfsd_allowlist[] = {
+	/*
+	 * Most syscalls are needed for fv_queue_set_started,
+	 * which calls these before fuse_init, and after
+	 * fuse_destroy.
+	 */
+	SCMP_SYS(mmap),
+	SCMP_SYS(mprotect),
+	SCMP_SYS(clone),
+	SCMP_SYS(set_robust_list),
+	SCMP_SYS(rt_sigaction),
+	SCMP_SYS(eventfd2),
+	SCMP_SYS(futex),
+	SCMP_SYS(munmap),
+	SCMP_SYS(madvise),
+	SCMP_SYS(exit),
+	/* at exit */
+	SCMP_SYS(close),
+	SCMP_SYS(exit_group),
+	/* at runtime */
+	SCMP_SYS(ppoll),
+	SCMP_SYS(read),
+	SCMP_SYS(recvmsg),
+	SCMP_SYS(rt_sigreturn),
+	SCMP_SYS(sendmsg),
+	SCMP_SYS(write),
+};
+
+static void _setup_seccomp(const int *allowlist, size_t len)
 {
 	scmp_filter_ctx ctx;
 	size_t i;
@@ -96,11 +124,11 @@ void setup_seccomp(void)
 		err(1, "seccomp_attr_set(ctx, SCMP_FLTATTR_CTL_TSYNC, 1)");
 	}
 
-	for (i = 0; i < G_N_ELEMENTS(syscall_whitelist); i++) {
+	for (i = 0; i < len; i++) {
 		if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				     syscall_whitelist[i], 0) != 0) {
+				     allowlist[i], 0) != 0) {
 			err(1, "seccomp_rule_add syscall %d",
-			    syscall_whitelist[i]);
+			    allowlist[i]);
 		}
 	}
 
@@ -114,4 +142,18 @@ void setup_seccomp(void)
 	}
 
 	seccomp_release(ctx);
+}
+
+void setup_seccomp_memfsd(void)
+{
+	size_t len = sizeof memfsd_allowlist / sizeof memfsd_allowlist[0];
+
+	_setup_seccomp(memfsd_allowlist, len);
+}
+
+void setup_seccomp(void)
+{
+	size_t len = sizeof virtiofsd_allowlist / sizeof virtiofsd_allowlist[0];
+
+	_setup_seccomp(virtiofsd_allowlist, len);
 }
