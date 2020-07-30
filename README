@@ -1,3 +1,30 @@
+MEMFSD
+
+This is an alternative virtiofs daemon, called memfsd, that provides a
+passthrough read-only view of the source directory (-o source).  Its goal is to
+reduce the host attack surface by specializing for a specific usecase: root
+filesystems for container-VMs (e.g., kata containers).  memfsd attempts to
+achieve the same memory benefits of regular containers: files from the same
+base image should only be cached once even when used by multiple containers.
+
+More specifically, memfsd minimizes the list of permitted host system calls by
+only allowing FUSE read operations onto a memory filesystem (memfs).
+Container-VMs only need an ephemeral writable layer on top of a shared
+read-only base. memfsd provides this shared read-only base which is then
+overlayed with a writable layer _inside_ the container-VM.
+
+The memfs stores the same directory structure as the source directory in the
+host while pointing to the host page-cache for data.  The memory overhead is
+only for the metadata (inodes and directory entries): around 165 Bytes per node
+(file or directory).  Operations like getattr and readdir access the memfs
+only, while setupmapping (used to read file content) accesses the real FS (by
+mmapping host files on the QEMU side).  Constructing this memfs requires access
+to multiple syscalls on the host FS (open, read, opendir, fstat, etc.), and
+it's therefore done before starting any FUSE session.
+
+
+=======================================================================
+
          QEMU README
          ===========
 
